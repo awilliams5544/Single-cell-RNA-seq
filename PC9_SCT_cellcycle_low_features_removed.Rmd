@@ -1,0 +1,155 @@
+---
+title: "PC9_SCT_cellcycle_filtered_low_features_removed"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  tidy = TRUE,
+  tidy.opts = list(width.cutoff = 120),
+  message = FALSE,
+  warning = FALSE
+)
+
+options(future.globals.maxSize = 8000 * 1024^2)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(dplyr)
+library(Seurat)
+library(ggplot2)
+library(sctransform)
+combined.sct <- readRDS(file = "~/Desktop/rds_files/PC9_all_SCT_cell_cycle_lowfeatures_removed.rds")
+```
+
+```{r tsneplot, fig.height=5, fig.width=7}
+# note that you can set `label = TRUE` or use the LabelClusters function to help label individual clusters
+?DimPlot
+DimPlot(object = combined.sct, reduction = 'umap', label = FALSE, group.by = "orig.ident")
+```
+
+```{r tsneplot, fig.height=5, fig.width=7}
+# note that you can set `label = TRUE` or use the LabelClusters function to help label individual clusters
+DimPlot(object = combined.sct, reduction = 'umap', label = TRUE)
+```
+
+```{r tsneplot, fig.height=5, fig.width=7}
+# note that you can set `label = TRUE` or use the LabelClusters function to help label individual clusters
+DimPlot(object = combined.sct, reduction = 'umap', label = TRUE, group.by = "Phase")
+```
+
+```{r}
+# find markers for every cluster compared to all remaining cells, report only the positive ones
+all.combined.markers <- FindAllMarkers(object = combined.sct, only.pos = TRUE, min.pct = 0.20, logfc.threshold = 0.25)
+#all.combined.markers %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
+all.combined.markers
+VlnPlot(object = combined.sct, features = "GPX4")
+```
+
+```{r markerplots, fig.height=8, fig.width=15}
+#Anti-apoptotic genes Matt and Mike are interested in BCL2/BCLXL/MCL1/BFL-1
+FeaturePlot(object = combined.sct, features = c("SAT1"))
+```
+
+```{r}
+FeaturePlot(object = combined.sct, features = c("CD44"))
+```
+
+```{r}
+DimPlot(object = combined.sct, reduction = 'umap', label = TRUE, group.by = "Phase")
+```
+
+```{r}
+VlnPlot(object = combined.sct, features = "VEGFA")
+```
+
+```{r clusterHeatmap, fig.height=8, fig.width=15}
+#data <- read.csv('test.csv', colClasses=c("time"="character"))
+Groger.emt <- read.csv("~/Desktop/Groger_EMT_Genes.csv", stringsAsFactors = FALSE)
+Taube.emt <- read.csv("~/Desktop/Taube_EMT_genes.csv", stringsAsFactors = FALSE)
+Hypoxia <- read.csv("~/Desktop/GSEA_hypoxia_upregulated_genes.csv", stringsAsFactors = FALSE)
+Hypoxia.buffa <- read.csv("~/Desktop/Hypoxia_gene_set_Buffa.csv", stringsAsFactors = FALSE)
+antioxidant <- read.csv("~/Desktop/Gelain_antioxidant_gene_list.csv", stringsAsFactors = FALSE)
+il6_signaling <- read.csv("~/Desktop/GSEA_IL6_signaling_geneset.csv", stringsAsFactors = FALSE)
+Hallmarks.apop <- read.csv("~/Desktop/Hallmarks_apoptosis_gene_set.csv", stringsAsFactors = FALSE)
+kegg.apop <- read.csv("~/Desktop/KEGG_apoptosis_gene_set.csv", stringsAsFactors = FALSE)
+zhong.adherence <- read.csv("~/Desktop/Zhong_adherence_protein_geneset.csv", stringsAsFactors = FALSE)
+dna.stress.induced.mut <- read.csv("~/Desktop/DNA_stress_induced_mutagenesis_gene_set.csv", stringsAsFactors = FALSE)
+kegg.tgfb <- read.csv("~/Desktop/KEGG_TGFB_signaling_gene_set.csv", stringsAsFactors = FALSE)
+biocarta.tgfb <- read.csv("~/Desktop/Biocarta_TGFB_signaling_gene_set.csv", stringsAsFactors = FALSE)
+Matt.select.ferroptosis.genes <- read.csv("~/Desktop/Ferroptosis_gene_set.csv", stringsAsFactors = FALSE)
+Braf.res.genes.heath <- read.csv("~/Desktop/Heath_single_cell_BRAF_res_genes.csv", stringsAsFactors = FALSE)
+Persister.overlapping.genes <- read.csv("~/Desktop/Overlapping_persister_genes_between_A375andPC9.csv", stringsAsFactors = FALSE)
+```
+
+
+```{r clusterHeatmap, fig.height=8, fig.width=15}
+#this will be a heat map of Groger_EMT_genes_upregulated
+DoHeatmap(object = combined.sct, features = Matt.select.ferroptosis.genes$Gene, group.by = "orig.ident")
+```
+
+```{r clusterHeatmap, fig.height=8, fig.width=15}
+#this will be a heat map of Groger_EMT_genes_upregulated
+DoHeatmap(object = combined.sct, features = Matt.select.ferroptosis.genes$Gene)
+```
+
+```{r}
+# find all markers distinguishing cluster 5 from clusters 0 and 3
+cluster.2.markers <- FindMarkers(object = combined.sct, ident.1 = 2, ident.2 = 8, min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.2.markers, n = 100)
+```
+
+```{r}
+cluster.6.markers <- FindMarkers(object = combined.sct, ident.1 = 6, ident.2 = c(3, 13), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.6.markers, n = 500)
+```
+
+```{r}
+cluster.8.markers <- FindMarkers(object = combined.sct, ident.1 = 8, ident.2 = 2, min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.8.markers, n = 100)
+```
+
+```{r}
+cluster.4.markers <- FindMarkers(object = combined.sct, ident.1 = 4, ident.2 = c(8, 9), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.4.markers, n = 100)
+```
+
+```{r}
+cluster.9.markers <- FindMarkers(object = combined.sct, ident.1 = 9, ident.2 = c(8, 4), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.9.markers, n = 100)
+```
+
+```{r}
+cluster.10.markers <- FindMarkers(object = combined.sct, ident.1 = 10, ident.2 = c(8, 4, 9), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.10.markers, n = 100)
+```
+
+```{r}
+cluster.7.markers <- FindMarkers(object = combined.sct, ident.1 = 7, ident.2 = c(2, 12, 3, 6), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.7.markers, n = 100)
+```
+
+```{r}
+cluster.12.markers <- FindMarkers(object = combined.sct, ident.1 = 12, ident.2 = c(7, 2), min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.12.markers, n = 100)
+```
+
+```{r}
+cluster.dtep.markers <- FindMarkers(object = combined.sct, ident.1 = "5_PC9_DTEPs", ident.2 = "3_PC9_persisters", group.by = "orig.ident", min.pct = 0.20)
+head(x = cluster.dtep.markers, n = 100)
+```
+
+```{r}
+cluster.13.markers <- FindMarkers(object = combined.sct, ident.1 = 13, ident.2 = 3, min.pct = 0.20, only.pos = TRUE)
+head(x = cluster.13.markers, n = 100)
+```
+
+
+
+
